@@ -13,7 +13,7 @@ struct Polygon {
 struct Boundary {
   double x_max, x_min, y_max, y_min;
 };
-int voronoi(const std::vector<Eigen::Vector2d> points,Boundary boundary, std::vector<Polygon> result);
+int voronoi(const std::vector<Eigen::Vector2d> points,Boundary boundary, std::vector<Polygon>& result);
 
 template <class T>
 bool ConvexHull(std::vector<T> point, std::vector<T>& convex_hull) {

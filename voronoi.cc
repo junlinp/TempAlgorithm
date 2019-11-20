@@ -24,8 +24,11 @@ std::vector<algorithm::TempTriangle> TriangleWithThePoint(algorithm::TempPoint p
 }
 
 bool TriangleHasEdge(algorithm::TempTriangle triangle, algorithm::Edge edge) {
-
-  return true;
+  bool b_has = false;
+  for (int i = 0; i < 3; i++) {
+    b_has |= algorithm::IsSameEdge(edge, triangle.GetEdge(i));
+  }
+  return b_has;
 }
 
 bool IsOpenEdge(algorithm::Edge edge, std::vector<algorithm::TempTriangle> triangles) {
@@ -64,7 +67,7 @@ bool IsOpenTriangle(algorithm::TempTriangle triangle,
 int OpenTriangleCount(algorithm::TempPoint point, std::vector<algorithm::TempTriangle> delaunay_triangle_network) {
   std::vector<algorithm::TempTriangle> triangle_has_point = TriangleWithThePoint(point, delaunay_triangle_network);
   int count = 0;
-  for(auto& triangle : delaunay_triangle_network) {
+  for (auto &triangle : delaunay_triangle_network) {
     if (IsOpenTriangle(triangle, delaunay_triangle_network, point)) {
       count++;
     }
@@ -72,7 +75,9 @@ int OpenTriangleCount(algorithm::TempPoint point, std::vector<algorithm::TempTri
   return count;
 }
 
-std::vector<algorithm::Edge> GetOpenEdge(algorithm::TempTriangle triangle, std::vector<algorithm::TempTriangle> related_triangle, algorithm::TempPoint related_point) {
+std::vector<algorithm::Edge> GetOpenEdge(algorithm::TempTriangle triangle,
+                                         std::vector<algorithm::TempTriangle> related_triangle,
+                                         algorithm::TempPoint related_point) {
   algorithm::Edge one, two;
   one.first = related_point;
   two.first = related_point;
@@ -88,7 +93,7 @@ std::vector<algorithm::Edge> GetOpenEdge(algorithm::TempTriangle triangle, std::
   }
 
   std::vector<algorithm::Edge> result;
-  if (IsOpenEdge(one,related_triangle)) {
+  if (IsOpenEdge(one, related_triangle)) {
     result.push_back(one);
   }
 
@@ -97,7 +102,7 @@ std::vector<algorithm::Edge> GetOpenEdge(algorithm::TempTriangle triangle, std::
   }
   return result;
 }
-Eigen::Vector2d CirumCircle(const algorithm::TempTriangle& triangle) {
+Eigen::Vector2d CirumCircle(const algorithm::TempTriangle &triangle) {
   Eigen::Vector2d p0 = triangle.vertexs[0].coordinate;
   Eigen::Vector2d p1 = triangle.vertexs[1].coordinate;
   Eigen::Vector2d p2 = triangle.vertexs[2].coordinate;
@@ -111,11 +116,15 @@ Eigen::Vector2d CirumCircle(const algorithm::TempTriangle& triangle) {
   return x;
 }
 
-void solve(Eigen::Vector2d center_point, Eigen::Vector2d edge_center_point, algorithm::Edge edge, double& d, double& alpha) {
+void solve(Eigen::Vector2d center_point,
+           Eigen::Vector2d edge_center_point,
+           algorithm::Edge edge,
+           double &d,
+           double &alpha) {
   Eigen::Vector2d a = edge_center_point - center_point;
   Eigen::Matrix2d A;
-  A << (edge.first.coordinate - edge.second.coordinate)(0, 0) , a(0, 0),
-      (edge.first.coordinate - edge.second.coordinate)(1, 0) , a(1, 0);
+  A << (edge.first.coordinate - edge.second.coordinate)(0, 0), a(0, 0),
+      (edge.first.coordinate - edge.second.coordinate)(1, 0), a(1, 0);
   Eigen::Vector2d b;
   b << edge.second.coordinate(0, 0) - center_point(0, 0),
       edge.second.coordinate(1, 0) - center_point(1, 0);
@@ -126,7 +135,7 @@ void solve(Eigen::Vector2d center_point, Eigen::Vector2d edge_center_point, algo
 
 }
 Eigen::Vector2d Intersect(Eigen::Vector2d center_point, Eigen::Vector2d edge_center_point, Boundary boundary) {
-  algorithm::TempPoint p00, p10, p01 , p11;
+  algorithm::TempPoint p00, p10, p01, p11;
   p00.coordinate = Eigen::Vector2d(boundary.x_min, boundary.y_min);
   p10.coordinate = Eigen::Vector2d(boundary.x_max, boundary.y_min);
   p01.coordinate = Eigen::Vector2d(boundary.x_min, boundary.y_max);
@@ -160,7 +169,7 @@ Eigen::Vector2d Intersect(Eigen::Vector2d center_point, Eigen::Vector2d edge_cen
   }
 }
 std::vector<Eigen::Vector2d> BoundaryFilter(Eigen::Vector2d cirumcircle_center, Eigen::Vector2d intersect_point,
-    algorithm::TempPoint point,std::vector<Eigen::Vector2d> boundary_points) {
+                                            algorithm::TempPoint point, std::vector<Eigen::Vector2d> boundary_points) {
   Eigen::Vector2d p;
   p << point.coordinate;
 
@@ -168,18 +177,74 @@ std::vector<Eigen::Vector2d> BoundaryFilter(Eigen::Vector2d cirumcircle_center, 
       [](Eigen::Vector2d p, Eigen::Vector2d line_pt1, Eigen::Vector2d line_pt2) {
         return (p - line_pt1)(0, 0) * (line_pt2 - line_pt1)(1, 0) -
             (p - line_pt1)(1, 0) * (line_pt2 - line_pt1)(0, 0);
-  };
+      };
   bool is_left = functor(p, cirumcircle_center, intersect_point) <= 0.0;
 
   std::vector<Eigen::Vector2d> result;
-  for(auto& boundary_point : boundary_points) {
-    if (is_left == (functor(boundary_point, cirumcircle_center, intersect_point) <= 0.0)) {
+  for (auto &boundary_point : boundary_points) {
+    double temp_value = functor(boundary_point, cirumcircle_center, intersect_point);
+    if (temp_value == 0.0) {
+      continue;
+    }
+    if (is_left ==  temp_value < 0.0) {
       result.push_back(boundary_point);
     }
   }
   return result;
 }
-int voronoi(const std::vector<Eigen::Vector2d> points, Boundary boundary, std::vector<Polygon> result) {
+
+bool IsInTriangle(Eigen::Vector2d point, algorithm::TempTriangle triangle) {
+
+  Eigen::Vector2d v2 = (point - triangle.vertexs[0].coordinate);
+  Eigen::Vector2d v1 = (triangle.vertexs[1].coordinate - triangle.vertexs[0].coordinate);
+  Eigen::Vector2d v0 = (triangle.vertexs[2].coordinate - triangle.vertexs[0].coordinate);
+
+  Eigen::Matrix2d A;
+  A << v0.dot(v0), v1.dot(v0),
+      v0.dot(v1), v1.dot(v1);
+  Eigen::Vector2d b;
+  b << v2.dot(v0),
+      v2.dot(v1);
+
+  Eigen::Vector2d x = A.inverse() * b;
+
+  if (x(0, 0) < 0 || x(0, 0) > 1) {
+    return false;
+  }
+
+  if (x(1, 0) < 0 || x(1, 0) > 1) {
+    return false;
+  }
+
+  return x(0, 0) + x(1, 0) <= 1.0;
+
+}
+Eigen::Vector2d OutLineVector(algorithm::Edge edge, algorithm::TempTriangle triangle) {
+  Eigen::Vector2d edge_center = (edge.first.coordinate + edge.second.coordinate) / 2.0;
+  Eigen::Vector2d edge_vector = (edge.first.coordinate - edge.second.coordinate);
+  Eigen::Vector2d edge_cross_vector;
+  if (abs(edge_vector(0, 0)) < 1e-7) {
+    edge_cross_vector << 0.0, 1.0;
+  } else if (abs(edge_vector(1, 0)) == 1e-7) {
+    edge_cross_vector << 1.0, 0.0;
+  } else {
+    edge_cross_vector << -edge_vector(1, 0) / edge_vector(0, 0), 1.0;
+  }
+
+  double d = 1e300;
+
+  while (!IsInTriangle(edge_center + d * edge_cross_vector, triangle)
+      && !IsInTriangle(edge_center - d * edge_cross_vector, triangle)) {
+    d /= 2.0;
+  }
+
+  if (IsInTriangle(edge_center + d * edge_cross_vector, triangle)) {
+    return edge_center - edge_cross_vector * d;
+  } else {
+    return edge_center + d * edge_cross_vector;
+  }
+}
+int voronoi(const std::vector<Eigen::Vector2d> points, Boundary boundary, std::vector<Polygon> &result) {
 
   std::vector<algorithm::TempTriangle> delaunay_triangle_network;
   int id = 0;
@@ -205,14 +270,14 @@ int voronoi(const std::vector<Eigen::Vector2d> points, Boundary boundary, std::v
     std::vector<Eigen::Vector2d> boundary_points;
 
     if (open_triangle_count == 0) {
-      for(auto& tri : triangle) {
+      for (auto &tri : triangle) {
         Eigen::Vector2d cirumcircle_center = CirumCircle(tri);
         points_need_convex_hull.push_back(cirumcircle_center);
       }
 
     } else if (open_triangle_count == 1 || open_triangle_count == 2) {
 
-      for(auto& tri : triangle) {
+      for (auto &tri : triangle) {
         // find the center
         Eigen::Vector2d cirumcircle_center = CirumCircle(tri);
 
@@ -220,9 +285,11 @@ int voronoi(const std::vector<Eigen::Vector2d> points, Boundary boundary, std::v
           // find the openedge
           std::vector<algorithm::Edge> open_edges = GetOpenEdge(tri, triangle, point);
 
-          for(auto& edge : open_edges) {
-            Eigen::Vector2d edge_center = (edge.first.coordinate + edge.second.coordinate)  / 2.0;
-            Eigen::Vector2d intersect_point = Intersect(cirumcircle_center, edge_center, boundary);
+          for (auto &edge : open_edges) {
+            Eigen::Vector2d edge_center = (edge.first.coordinate + edge.second.coordinate) / 2.0;
+
+            Eigen::Vector2d outlier_vector = OutLineVector(edge, tri);
+            Eigen::Vector2d intersect_point = Intersect(edge_center, outlier_vector, boundary);
 
             points_need_convex_hull.push_back(intersect_point);
             // filter the boundary
@@ -231,10 +298,9 @@ int voronoi(const std::vector<Eigen::Vector2d> points, Boundary boundary, std::v
         }
         points_need_convex_hull.push_back(cirumcircle_center);
 
-        for(auto b_p : boundary_points) {
+        for (auto b_p : boundary_points) {
           points_need_convex_hull.push_back(b_p);
         }
-
 
       }
 
@@ -248,18 +314,19 @@ int voronoi(const std::vector<Eigen::Vector2d> points, Boundary boundary, std::v
       double x, y;
     };
     std::vector<SimplePoint> temp_point_need_convex_hull;
-    for_each(points_need_convex_hull.begin(), points_need_convex_hull.end(), [&temp_point_need_convex_hull](Eigen::Vector2d p) {
-      SimplePoint simple_point;
-      simple_point.x = p(0, 0);
-      simple_point.y = p(1, 0);
-      temp_point_need_convex_hull.push_back(simple_point);
-    });
+    for_each(points_need_convex_hull.begin(),
+             points_need_convex_hull.end(),
+             [&temp_point_need_convex_hull](Eigen::Vector2d p) {
+               SimplePoint simple_point;
+               simple_point.x = p(0, 0);
+               simple_point.y = p(1, 0);
+               temp_point_need_convex_hull.push_back(simple_point);
+             });
     std::vector<SimplePoint> polygon_points;
     ConvexHull(temp_point_need_convex_hull, polygon_points);
 
-
     Polygon voronoi_polygon;
-    for(auto item : polygon_points) {
+    for (auto item : polygon_points) {
       Eigen::Vector2d v_p;
       v_p << item.x, item.y;
       voronoi_polygon.vertexs.push_back(v_p);

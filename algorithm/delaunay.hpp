@@ -12,6 +12,7 @@ struct TempPoint {
   int id;
   Eigen::Vector2d coordinate;
 };
+typedef std::pair<TempPoint, TempPoint> Edge;
 struct Triangle {
   int id;
   std::vector<TempPoint> vertexs;
@@ -21,8 +22,15 @@ struct Triangle {
 struct TempTriangle {
   int id;
   std::vector<TempPoint> vertexs;
+
+  Edge GetEdge(int index) {
+    Edge edge;
+    edge.first = vertexs[index];
+    edge.second = vertexs[(index + 1) % 3];
+    return edge;
+  }
+
 };
-typedef std::pair<TempPoint, TempPoint> Edge;
 
 bool IsBadTriangle(const TempPoint &point, const TempTriangle &triangle);
 inline bool IsSameEdge(const Edge &lhs_edge, const Edge &rhs_edge) {

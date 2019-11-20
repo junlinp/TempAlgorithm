@@ -25,5 +25,13 @@ TEST(Voronoi, Voronoi) {
 
   ASSERT_TRUE(ret == 1);
   ASSERT_EQ(result.size(), 5);
+  int count = 0;
+  for(Polygon polygon : result) {
+    std::cout << "Polygon " << count++ << std::endl;
+    for(int i = 0; i < polygon.vertexs.size(); ++i) {
+      std::cout << polygon.vertexs[i](0, 0) << " " << polygon.vertexs[i](1, 0) << " ";
+    }
+    std::cout << std::endl;
+  }
 }
 #endif //OPENCV_TEST__VORONOI_TEST_HPP_
