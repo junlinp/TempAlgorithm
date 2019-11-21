@@ -66,4 +66,23 @@ TEST(Delaunays, Delaunarys) {
   fout.close();
 
 }
+TEST(Delaunays, TempDelaunarys) {
+  struct PointXYZ {
+   double x, y, z;
+   PointXYZ(double x = 0.0,double y = 0.0,double z = 0.0) : x(x), y(y), z(z){};
+  };
+  std::vector<PointXYZ> points;
+  points.push_back(PointXYZ(0.0, 0.0, 0.0));
+  points.push_back(PointXYZ(2.0, 0.0, 0.0));
+  points.push_back(PointXYZ(-2.0, 0.0, 0.0));
+  points.push_back(PointXYZ(0.0, 2.0, 0.0));
+  points.push_back(PointXYZ(0.0, -2.0, 0.0));
+
+
+ std::vector<algorithm::WrapTriangle<PointXYZ>> result;
+
+  algorithm::Delaunay(points, result);
+
+  ASSERT_EQ(result.size(), 4);
+}
 #endif //OPENCV_TEST_ALGORITHM_DELAUNAY_TEST_HPP_
