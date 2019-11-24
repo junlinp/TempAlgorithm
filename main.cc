@@ -2,17 +2,21 @@
 #include <strstream>
 #include <memory>
 
-#include <opencv2/core.hpp>
-#include <Eigen/Dense>
+//#include <opencv2/core.hpp>
+//#include <Eigen/Dense>
 
-#include "ImageProcess.hpp"
-#include "lei_group.hpp"
+//#include "ImageProcess.hpp"
+//#include "lei_group.hpp"
+
+//#include "omp.h"
+
 //#include "dense_mapping.hpp"
-#include "dense_mapping_slam.hpp"
-#include "camera_calib.hpp"
-
-using namespace Eigen;
-uchar table[256];
+//#include "dense_mapping_slam.hpp"
+//#include "camera_calib.hpp"
+#include "Eigen/Dense"
+#include "geometry_algorithm.hpp"
+//uchar table[256];
+/*
 void eigen_test() {
   const int N = 128;
   Matrix<double, N, N> matrix_NN = MatrixXd::Random(N, N);
@@ -37,7 +41,11 @@ void eigen_test() {
             << 1000 * (clock() - time_stt) / (double) CLOCKS_PER_SEC << "ms" << std::endl;
   std::cout << "x = " << x.transpose() << std::endl;
 }
+ */
+const int thread_nums = 1024 * 1024;
+double shared_data[thread_nums] = {0.0};
 int main(int argc, char **argv) {
+  /*
   std::cout << "hello world" << std::endl;
   for (int i = 0; i < 256; i++) {
     table[i] = i / 20 * 20;
@@ -62,11 +70,9 @@ int main(int argc, char **argv) {
   //gaussian_blur_filter(m);
 
   //pyr_compare(m);
-  /*
   make_border(m);
   cv::Mat image = cv::imread("IMG_20180903_172737.jpg");
   sobel_demo(image);
-   */
   lei_main();
   //dense_mapping_main();
   eigen_test();
@@ -87,5 +93,48 @@ int main(int argc, char **argv) {
   class A {};
   std::unique_ptr<A> ptr_a(new A);
   std::shared_ptr<A> shared_ptr_a = std::move(ptr_a);
+  */
+  /*
+#pragma omp parallel num_threads(4)
+  {
 
+    int id = omp_get_thread_num();
+    printf("hello (%d)", id);
+    printf("world(%d)\n", id);
+  }
+
+  const double step = 1.0 / thread_nums;
+  omp_set_num_threads(1024);
+  double sum = 0.0;
+#pragma omp parallel
+  {
+#pragma omp for reduction(+ : sum)
+  for (int i = 0; i < thread_nums; i++) {
+    double x = (i + 0.5) * step;
+//#pragma omp atomic
+    sum += 4.0 / (1.0 + x * x) * step;
+  }
+};
+*/
+//for(int i = 0; i < thread_nums ;i++) {
+// sum += shared_data[i] * step;
+//}
+Eigen::Vector3d a(1, 2, 3);
+  Eigen::Vector3d b(4, 5, 6);
+  Eigen::Vector3d c(7, 8, 9);
+Eigen::Matrix3d matrix;
+matrix << a.transpose(), b.transpose(), c.transpose();
+std::cout << matrix << std::endl;
+Eigen::FullPivLU<Eigen::Matrix3d> lu(matrix);
+std::cout << lu.rank() << std::endl;
+std::cout << IsLineIntersect(Eigen::Vector3d(0.0, 0.0,0.0),
+      Eigen::Vector3d(0.0, 1.0, 0.0),
+      Eigen::Vector3d(1.0, 0.0, 0.0),
+      Eigen::Vector3d(2.0, 0.0, 0.0)
+      ) << std::endl;
+  std::cout << IsLineIntersect(Eigen::Vector3d(0.0, -1.0,0.0),
+                               Eigen::Vector3d(0.0, 1.0, 0.0),
+                               Eigen::Vector3d(1.0, 0.0, 0.0),
+                               Eigen::Vector3d(-2.0, 0.0, 0.0)
+  ) << std::endl;
 }

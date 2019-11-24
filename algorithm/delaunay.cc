@@ -14,16 +14,12 @@ bool IsBadTriangle(const TempPoint &point, const TempTriangle &triangle) {
   Eigen::Vector2d point_coordinate = point.coordinate;
   double xs = point_coordinate(0, 0);
   double ys = point_coordinate(1, 0);
-  //std::cout << xs << " " << ys << std::endl;
 
   A << 2 * (p1(0, 0) - p0(0, 0)), 2 * (p1(1, 0) - p0(1, 0)),
       2 * (p2(0, 0) - p0(0, 0)), 2 * (p2(1, 0) - p0(1, 0));
   Eigen::Vector2d b;
   b << p1(0, 0) * p1(0, 0) + p1(1, 0) * p1(1, 0) - p0(0, 0) * p0(0, 0) - p0(1, 0) * p0(1, 0),
       p2(0, 0) * p2(0, 0) + p2(1, 0) * p2(1, 0) - p0(0, 0) * p0(0, 0) - p0(1, 0) * p0(1, 0);
-  //std::cout << "A : " << A << std::endl;
-  //std::cout << "b : " << b << std::endl;
-  //std::cout << "A^-1 : " << A.inverse() << std::endl;
   Eigen::Vector2d x = A.inverse() * b;
   double lhs = (x - p0).norm();
   double rhs = (x - point.coordinate).norm();
@@ -120,7 +116,6 @@ bool Delaunay(const std::vector<TempPoint> &points, std::vector<TempTriangle> &r
         ++it;
       }
     }
-    std::cout << bad_triangle_set.size() << std::endl;
     for (int i = 0; i < bad_triangle_set.size(); ++i) {
       // find the edge
       TempTriangle current_triangle = bad_triangle_set[i];

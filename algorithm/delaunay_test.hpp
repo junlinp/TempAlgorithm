@@ -6,9 +6,11 @@
 #define OPENCV_TEST_ALGORITHM_DELAUNAY_TEST_HPP_
 #include "delaunay.hpp"
 #include "fstream"
-
+#include "random"
 #include "gtest/gtest.h"
 #include <Eigen/Dense>
+#include <opencv2/core/types.hpp>
+#include <opencv2/imgproc.hpp>
 TEST(Delaunary, IsBadTriangle) {
   algorithm::TempTriangle triangle;
   algorithm::TempPoint a;
@@ -84,5 +86,51 @@ TEST(Delaunays, TempDelaunarys) {
   algorithm::Delaunay(points, result);
 
   ASSERT_EQ(result.size(), 4);
+}
+
+TEST(Delaunays, TempDelaunarys_BIGDATA) {
+  struct PointXYZ {
+    double x, y, z;
+    PointXYZ(double x = 0.0,double y = 0.0,double z = 0.0) : x(x), y(y), z(z){};
+  };
+  std::vector<PointXYZ> points;
+  std::default_random_engine engine;
+  std::uniform_real_distribution<double> distri(-100, 100);
+  for(int i = 0; i < 256; i++) {
+   points.push_back(PointXYZ(distri(engine), distri(engine), distri(engine)));
+  }
+
+  std::vector<algorithm::WrapTriangle<PointXYZ>> result;
+
+  algorithm::Delaunay(points, result);
+
+  ASSERT_TRUE(result.size() > 0);
+}
+TEST(OpenCV, Voronoi) {
+  std::vector<cv::Point2f> points;
+
+  std::default_random_engine engine;
+  std::uniform_real_distribution<double> distri(-100, 100);
+  cv::Rect rect(-100, -100, 200, 200);
+  cv::Subdiv2D subdiv_2_d(rect);
+  int point_num = 1024 * 1024;
+  for (int i = 0; i < point_num; i++) {
+    points.push_back(cv::Point2f(distri(engine), distri(engine)));
+    //subdiv_2_d.insert(points[i]);
+  }
+  subdiv_2_d.insert(cv::Point2f(2.0 , 0.0));
+  subdiv_2_d.insert(cv::Point2f(-2.0 , 0.0));
+  subdiv_2_d.insert(cv::Point2f(0.0 , 0.5));
+  std::vector<std::vector<cv::Point2f>> faces;
+  std::vector<cv::Point2f> centers;
+  subdiv_2_d.getVoronoiFacetList(std::vector<int>(), faces, centers);
+  //ASSERT_TRUE(faces.size() == point_num);
+  int id = 0;
+  for(auto& face : faces) {
+    for(auto& point : face) {
+      printf("Polygon %d: x = %f, y = %f\n", id, point.x, point.y);
+    }
+    id++;
+  }
 }
 #endif //OPENCV_TEST_ALGORITHM_DELAUNAY_TEST_HPP_

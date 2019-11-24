@@ -13,6 +13,16 @@ struct Polygon {
 struct Boundary {
   double x_max, x_min, y_max, y_min;
 };
+
+template <class T>
+int voronoi(const std::vector<T>& points, Boundary boundary, std::vector<Polygon>& result) {
+  std::vector<Eigen::Vector2d> t_points;
+  for(const auto& item : points) {
+    t_points.emplace_back(Eigen::Vector2d(item.x, item.y));
+
+  }
+  return voronoi(t_points, boundary, result);
+}
 int voronoi(const std::vector<Eigen::Vector2d> points,Boundary boundary, std::vector<Polygon>& result);
 
 template <class T>

@@ -3,7 +3,7 @@
 //
 #include "algorithm/delaunay_test.hpp"
 #include "voronoi_test.hpp"
-
+#include "geometry_algorithm_test.hpp"
 #include "gtest/gtest.h"
 
 

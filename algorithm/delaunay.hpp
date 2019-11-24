@@ -9,6 +9,9 @@
 #include <Eigen/Dense>
 
 #include <iostream>
+/*
+ * Bowyer-Watson algorithm
+ */
 namespace algorithm {
 struct TempPoint {
   int id;
@@ -48,10 +51,14 @@ template<class T>
 struct WrapPoint {
   int id;
   std::shared_ptr<T> entity;
-
+  Eigen::Vector3d eigen_vector;
+  //WrapPoint(int _id, const T& _entity) : id(_id), eigen_vector(std::move(std::make_shared<T>(_entity))){}
   double x() const { return entity->x;}
   double y() const {return entity->y;}
   double z() const {return entity->z;}
+  Eigen::Vector3d GetEigenVector() const {
+    return eigen_vector;
+  }
 };
 template<class T>
 struct WrapEdge {
@@ -196,6 +203,7 @@ bool Delaunay(const std::vector<T>& points, std::vector<WrapTriangle<T>> &result
 #pragma omp parallel for
   for (const auto& insert_point : v_temp_points) {
     std::vector<WrapTriangle<T>> bad_triangle_set;
+
     auto iterator = triangle_set.begin();
     while (iterator != triangle_set.end()) {
       if (IsBadTriangle(insert_point, *iterator)) {
