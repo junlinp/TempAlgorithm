@@ -15,7 +15,7 @@ jobs:
     steps:
     - uses: actions/checkout@v1
     - name: Install
-      run: apt-get install opencv -y
+      run: sudo apt-get install git -y
     - name: make
       run: make
     - name: make check
