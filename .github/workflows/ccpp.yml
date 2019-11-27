@@ -14,8 +14,10 @@ jobs:
     
     steps:
     - uses: actions/checkout@v1
-    - name: Install
+    - name: Install git
       run: sudo apt-get install git -y
+    - name: Install opencv
+      run: git clone https://github.com/opencv/opencv.git && git clone https://github.com/opencv/opencv_contrib.git
     - name: make
       run: make
     - name: make check
