@@ -14,8 +14,8 @@ jobs:
     
     steps:
     - uses: actions/checkout@v1
-    - name: cmake
-      run: cmake .
+    - name: Install
+      run: apt-get install opencv -y
     - name: make
       run: make
     - name: make check
