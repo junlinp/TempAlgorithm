@@ -11,6 +11,32 @@
 #include <Eigen/Dense>
 #include <opencv2/core/types.hpp>
 #include <opencv2/imgproc.hpp>
+#include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
+#include <CGAL/Projection_traits_xy_3.h>
+#include <CGAL/Delaunay_triangulation_2.h>
+TEST(CGAL_Delaunary, 4M) {
+  typedef CGAL::Exact_predicates_inexact_constructions_kernel Kernel;
+  typedef CGAL::Projection_traits_xy_3<Kernel> Gt;
+  typedef Kernel::Point_3 Point;
+  typedef CGAL::Delaunay_triangulation_2<Gt> Delaunay;
+  Delaunay dt;
+  const int N = 1024 * 1024 * 4;
+  std::default_random_engine engine;
+  std::uniform_real_distribution<double> dis(-1000, 1000);
+  auto g = std::bind(dis, engine);
+  for(int i = 0; i < N; i++) {
+    dt.insert(Point(g(), g(), g()));
+  }
+  int count = 0;
+  for(auto it = dt.finite_faces_begin(); it != dt.finite_faces_end(); ++it) {
+    std::cout << dt.triangle(it) << std::endl;
+    count++;
+  }
+  std::cout << "Total " << count << "Triangle" << std::endl;
+
+
+}
+/*
 TEST(Delaunary, IsBadTriangle) {
   algorithm::TempTriangle triangle;
   algorithm::TempPoint a;
@@ -133,4 +159,5 @@ TEST(OpenCV, Voronoi) {
     id++;
   }
 }
+ */
 #endif //OPENCV_TEST_ALGORITHM_DELAUNAY_TEST_HPP_
