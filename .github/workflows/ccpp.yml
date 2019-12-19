@@ -1,0 +1,26 @@
+name: C/C++ CI
+
+on: 
+  push:
+    branches: 
+      - master
+  schedule:
+    - cron: "0 2 * * 1-5"
+
+jobs:
+
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v1
+    - name: Install git
+      run: sudo apt-get install git -y
+    - name: Install opencv
+      run: git clone https://github.com/opencv/opencv.git && git clone https://github.com/opencv/opencv_contrib.git
+    - name: make
+      run: make
+    - name: make check
+      run: make check
+    - name: make distcheck
+      run: make distcheck
