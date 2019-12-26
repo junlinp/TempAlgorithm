@@ -29,7 +29,14 @@ steps:
     ls
     sudo apt install -y cmake
   condition: eq( variables['Agent.OS'], 'Linux') 
-  displayName: 'Run a multi-line script'
+  displayName: 'Install Cmake in Linux'
+- bash: |
+     mkdir build
+     cd build
+     cmake ..
+     make
+  condition: eq( variables['Agent.OS'], 'Linux')
+  displayName: 'Build'
  
 # macOS
 - bash: |
