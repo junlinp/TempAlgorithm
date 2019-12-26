@@ -64,8 +64,18 @@ steps:
  
 # macOS
 - bash: |
-     brew install cmake
+     brew install cmake opencv eigen sophus googletest cgal
   condition: eq( variables['Agent.OS'], 'Darwin')
+  displayName: 'Pre-request MacOS'
+
+- bash: |
+     mkdir build
+     cd build
+     cmake ..
+     make
+  condition: eq( variables['Agent.OS'], 'Darwin')
+  displayName: 'Compile'
+
 
 # Windows
 - powershell: |
