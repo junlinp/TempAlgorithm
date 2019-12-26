@@ -27,9 +27,33 @@ steps:
     echo Add other tasks to build, test, and deploy your project.
     echo See https://aka.ms/yaml
     ls
-    sudo apt install -y cmake
+    sudo apt install -y cmake libopencv-dev git
   condition: eq( variables['Agent.OS'], 'Linux') 
-  displayName: 'Install Cmake in Linux'
+  displayName: 'Install Pre-Request in Linux'
+- bash: |
+        git clone https://gitlab.com/libeigen/eigen.git
+        cd eigen
+        mkdir build
+        cd build
+        cmake ..
+        make install
+        cd ../..
+
+  condition: eq( variables['Agent.OS'], 'Linux') 
+  displayName: 'Install Pre-Request in Linux'
+
+- bash: |
+     git clone https://github.com/strasdat/Sophus.git
+     cd Sophus
+     mkdir build
+     cd build
+     cmake ..
+     make install
+     cd ../..
+  condition: eq( variables['Agent.OS'], 'Linux') 
+  displayName: 'Install Sophus in Linux'
+
+
 - bash: |
      mkdir build
      cd build
