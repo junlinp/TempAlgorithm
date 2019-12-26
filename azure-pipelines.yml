@@ -29,7 +29,6 @@ steps:
     ls
     sudo apt update
     sudo apt upgrade
-    sudo apt install -y cmake git
   condition: eq( variables['Agent.OS'], 'Linux') 
   displayName: 'Install Pre-Request in Linux'
 - bash: |
@@ -55,15 +54,6 @@ steps:
   condition: eq( variables['Agent.OS'], 'Linux') 
   displayName: 'Install Sophus in Linux'
 
-
-- bash: |
-     mkdir build
-     cd build
-     cmake ..
-     make
-  condition: eq( variables['Agent.OS'], 'Linux')
-  displayName: 'Build'
- 
 # macOS
 - bash: |
      brew install git cmake opencv eigen cgal libomp
@@ -87,8 +77,16 @@ steps:
      cd build
      cmake ..
      make
+
   condition: eq( variables['Agent.OS'], 'Darwin')
-  displayName: 'Compile'
+  displayName: 'Compile In MacOS'
+
+- bash: |
+     ./test.main
+
+  condition: eq( variables['Agent.OS'], 'Darwin')
+  displayName: 'Run Test'
+
 
 
 # Windows
