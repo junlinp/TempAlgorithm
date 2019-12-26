@@ -82,6 +82,7 @@ steps:
   displayName: 'Compile In MacOS'
 
 - bash: |
+     ls
      ./test.main
 
   condition: eq( variables['Agent.OS'], 'Darwin')
