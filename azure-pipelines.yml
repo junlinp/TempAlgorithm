@@ -66,7 +66,7 @@ steps:
  
 # macOS
 - bash: |
-     brew install cmake opencv eigen googletest cgal
+     brew install git cmake opencv eigen cgal
      git clone https://github.com/strasdat/Sophus.git
      cd Sophus
      mkdir build
@@ -74,6 +74,11 @@ steps:
      cmake ..
      make install
      cd ../..
+     git clone https://github.com/google/googletest.git
+     cd googletest
+     cmake .
+     make install
+     cd ..
   condition: eq( variables['Agent.OS'], 'Darwin')
   displayName: 'Pre-request MacOS'
 
