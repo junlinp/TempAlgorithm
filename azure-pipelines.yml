@@ -29,7 +29,7 @@ steps:
     ls
     sudo apt update
     sudo apt upgrade
-    sudo apt install -y cmake libopencv-dev git
+    sudo apt install -y cmake git
   condition: eq( variables['Agent.OS'], 'Linux') 
   displayName: 'Install Pre-Request in Linux'
 - bash: |
@@ -66,7 +66,7 @@ steps:
  
 # macOS
 - bash: |
-     brew install git cmake opencv eigen cgal
+     brew install git cmake opencv eigen cgal libomp
      git clone https://github.com/strasdat/Sophus.git
      cd Sophus
      mkdir build
