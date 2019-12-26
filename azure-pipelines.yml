@@ -22,11 +22,22 @@ pool:
 steps:
 - script: echo Hello, world!
   displayName: 'Run a one-line script'
-
-- script: |
+# Linux
+- bash: |
     echo Add other tasks to build, test, and deploy your project.
     echo See https://aka.ms/yaml
     ls
     sudo apt install -y cmake
- 
+  condition: eq( variables['Agent.OS'], 'Linux') 
   displayName: 'Run a multi-line script'
+ 
+# macOS
+- bash: |
+     brew install cmake
+  condition: eq( variables['Agent.OS'], 'Darwin')
+
+# Windows
+- powershell: |
+      echo "I am Windows"
+  condition: eq( variables['Agent.OS'], 'Windows_NT')
+
