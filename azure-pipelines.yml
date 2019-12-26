@@ -83,7 +83,7 @@ steps:
 
 - bash: |
      ls
-     ./build/test.main
+     ./build/test_main
 
   condition: eq( variables['Agent.OS'], 'Darwin')
   displayName: 'Run Test'
