@@ -25,6 +25,8 @@ steps:
     buildType: 'specific'
     project: 'GoogleTest'
     pipeline: 'GoogleTest'
+    BuildVersionToDownload: 'latest'
+    branchName: 'refs/heads/master'
     artifactName: 'gtest_lib'
     downloadPath: '.'
 
