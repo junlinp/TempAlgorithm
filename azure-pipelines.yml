@@ -21,14 +21,12 @@ pool:
 
 steps:
 - task: DownloadBuildArtifacts@0
-  -inputs:
-    buildType: 'specific'
-    project: 'GoogleTest'
-    pipeline: 'GoogleTest'
-    BuildVersionToDownload: 'latest'
-    branchName: 'refs/heads/master'
-    artifactName: 'gtest_lib'
-    downloadPath: '.'
+  inputs:
+      buildType: 'specific'
+      project: 'GoogleTest'
+      pipeline: 'GoogleTest'
+      artifactName: 'gtest_lib'
+      downloadPath: '$(System.ArtifactsDirectory)' 
 
 # Linux
 - bash: |
