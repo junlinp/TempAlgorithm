@@ -20,6 +20,14 @@ pool:
   vmImage: $(imageName)
 
 steps:
+- task: DownloadBuildArtifacts@0
+  -inputs:
+    buildType: 'specific'
+    project: 'GoogleTest'
+    pipeline: 'GoogleTest'
+    artifactName: 'gtest_lib'
+    downloadPath: '.'
+
 # Linux
 - bash: |
         mkdir build
