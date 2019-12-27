@@ -37,31 +37,11 @@ steps:
   condition: eq( variables['Agent.OS'], 'Linux') 
   displayName: 'Install Pre-Request in Linux'
 
-
-# macOS
-- bash: |
-     brew install git cmake opencv eigen cgal libomp
-     git clone https://github.com/strasdat/Sophus.git
-     cd Sophus
-     mkdir build
-     cd build
-     cmake ..
-     make install
-     cd ../..
-     git clone https://github.com/google/googletest.git
-     cd googletest
-     cmake .
-     make install
-     cd ..
-  condition: eq( variables['Agent.OS'], 'Darwin')
-  displayName: 'Pre-request MacOS'
-
 - bash: |
      mkdir build
      cd build
      cmake ..
      make
-
   condition: eq( variables['Agent.OS'], 'Darwin')
   displayName: 'Compile In MacOS'
 
