@@ -7,10 +7,10 @@
 #include "gtest/gtest.h"
 //#include "kdtree_test.hpp"
 //#include "utils/thread_pool_unittest.hpp"
-#include "algorithm/unconstrained_minization_unittest.hpp"
-#include "algorithm/delaunay_test.hpp"
-int main(int args, char** argv) {
+//#include "algorithm/unconstrained_minization_unittest.hpp"
+//#include "algorithm/delaunay_test.hpp"
+int main(int args, char **argv)
+{
   testing::InitGoogleTest(&args, argv);
   return RUN_ALL_TESTS();
 }
-
