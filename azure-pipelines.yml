@@ -26,7 +26,7 @@ steps:
       project: 'GoogleTest'
       pipeline: 'GoogleTest'
       artifactName: 'gtest_lib'
-      downloadPath: '$(System.ArtifactsDirectory)' 
+      downloadPath: '.' 
 
 # Linux
 - bash: |
