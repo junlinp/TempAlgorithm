@@ -20,39 +20,15 @@ pool:
   vmImage: $(imageName)
 
 steps:
-- script: echo Hello, world!
-  displayName: 'Run a one-line script'
 # Linux
 - bash: |
-    echo Add other tasks to build, test, and deploy your project.
-    echo See https://aka.ms/yaml
-    ls
-    sudo apt update
-    sudo apt upgrade
-  condition: eq( variables['Agent.OS'], 'Linux') 
-  displayName: 'Install Pre-Request in Linux'
-- bash: |
-        git clone https://gitlab.com/libeigen/eigen.git
-        cd eigen
         mkdir build
         cd build
         cmake ..
-        make install
-        cd ../..
-
+        make
   condition: eq( variables['Agent.OS'], 'Linux') 
   displayName: 'Install Pre-Request in Linux'
 
-- bash: |
-     git clone https://github.com/strasdat/Sophus.git
-     cd Sophus
-     mkdir build
-     cd build
-     cmake ..
-     make install
-     cd ../..
-  condition: eq( variables['Agent.OS'], 'Linux') 
-  displayName: 'Install Sophus in Linux'
 
 # macOS
 - bash: |
