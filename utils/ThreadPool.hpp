@@ -19,7 +19,7 @@ class ThreadPool {
 
   void ThreadProcess();
  public:
-  ThreadPool(size_t num_thread);
+  ThreadPool(size_t num_thread = std::thread::hardware_concurrency());
   ~ThreadPool();
 
   void AddTask(const std::function<void(void)>& callable);

@@ -29,17 +29,20 @@ ThreadPool::~ThreadPool() {
 void ThreadPool::ThreadProcess() {
   while(true) {
     std::function<void(void)> task;
-    std::unique_lock<std::mutex> ul(_mutex_queue);
-    _cv.wait(ul, [this]{return this->b_stop ||!_queue.empty();});
-    if(this->b_stop && _queue.empty()) return;
-    task = _queue.front();
-    _queue.pop();
+    {
+      std::unique_lock<std::mutex> ul(_mutex_queue);
+      _cv.wait(ul, [this]{return this->b_stop ||!_queue.empty();});
+      if(this->b_stop && _queue.empty()) return;
+      task = _queue.front();
+      _queue.pop();
+    }
+
     task();
   }
 
 }
 void ThreadPool::AddTask(const std::function<void(void)> &callable) {
-  std::lock_guard<std::mutex> lg(_mutex_queue);
+  std::unique_lock<std::mutex> lg(_mutex_queue);
   _queue.push(callable);
 }
 

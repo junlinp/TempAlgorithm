@@ -7,16 +7,25 @@
 
 #include <gtest/gtest.h>
 #include "ThreadPool.hpp"
+void Functor(int* arr, int N, int idx, ThreadPool &pool) {
+  if (idx < N) {
+    arr[idx] = idx;
+    pool.AddTask(std::bind(Functor, arr, N, idx + 1, std::ref(pool)));
+  }
+}
 TEST(ThreadPool, Simple) {
-  auto functor = [](int id) {
-    std::cout << "task " << id << " Run" << std::endl;
-  };
-  ThreadPool thread_pool(2);
+  const int N = 1024 * 1024;
+  int arr[N] = {0};
 
-  for(int i = 0; i < 1024; i++) {
+  {
+
+    ThreadPool thread_pool;
     thread_pool.AddTask(
-        std::bind(functor, i)
-    );
+        std::bind(Functor, arr, N, 0, std::ref(thread_pool))
+      );
+  }
+  for(int i = 0; i < N; i++) {
+    EXPECT_EQ(arr[i], i);
   }
 }
 #endif //ALGORITHM_UTILS_THREAD_POOL_UNITTEST_HPP_
