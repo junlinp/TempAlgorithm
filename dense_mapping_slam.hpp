@@ -10,7 +10,6 @@
 
 using namespace std;
 
-#include <boost/timer.hpp>
 
 // for sophus
 #include <sophus/se3.hpp>
@@ -48,6 +47,13 @@ const int ncc_window_size = 3;    // NCC 取的窗口半宽度
 const int ncc_area = (2 * ncc_window_size + 1) * (2 * ncc_window_size + 1); // NCC窗口面积
 const double min_cov = 0.1;     // 收敛判定：最小方差
 const double max_cov = 10;      // 发散判定：最大方差
+
+struct Image {
+  cv::Mat img;
+  Eigen::Matrix3d rotation;
+  Eigen::Vector3d translation;
+};
+
 Vector3d pt2cam(Vector2d pt) {
 
   return Vector3d((pt(0, 0) - cx) / fx, (pt(1, 0) - cy) / fy, 1);
@@ -56,6 +62,10 @@ Vector3d pt2cam(Vector2d pt) {
 Vector2d cam2pt(Vector3d pt) {
   return Vector2d(pt[0] / pt[2] * fx + cx, pt[1] / pt[2] * fy + cy);
 }
+
+bool readDataset(const std::string &path,
+                 std::vector<Image> &img_and_pose
+);
 // ------------------------------------------------------------------
 // 重要的函数
 /// 从 REMODE 数据集读取数据
@@ -202,8 +212,11 @@ int slam_main(int argc, char **argv) {
   // 从数据集读取数据
   vector<string> color_image_files;
   vector<SE3d> poses_TWC;
+  std::vector<Image> image_and_pose;
   Mat ref_depth;
   bool ret = readDatasetFiles(data_path, color_image_files, poses_TWC, ref_depth);
+  ret = readDataset(data_path, image_and_pose);
+
   if (ret == false) {
     cout << "Reading image files failed!" << endl;
     return -1;
@@ -224,11 +237,23 @@ int slam_main(int argc, char **argv) {
     if (curr.data == nullptr) continue;
     SE3d pose_curr_TWC = poses_TWC[index];
     SE3d pose_T_C_R = pose_curr_TWC.inverse() * pose_ref_TWC;   // 坐标转换关系： T_C_W * T_W_R = T_C_R
+    Eigen::Matrix3d ref_rotation = image_and_pose[0].rotation;
+    Eigen::Vector3d ref_translation = image_and_pose[0].translation;
+
+    Eigen::Matrix3d cur_rotation = image_and_pose[index].rotation;
+    Eigen::Vector3d cur_translation = image_and_pose[index].translation;
+
+    Eigen::Matrix3d _rotation = cur_rotation.transpose() * ref_rotation;
+    Eigen::Vector3d _translation = cur_rotation.transpose() * (ref_translation - cur_translation);
+    Eigen::Matrix3d _rotation_ = pose_T_C_R.rotationMatrix();
+    Eigen::Vector3d _translation_ = pose_T_C_R.translation();
+
+    std::cout << (_translation - _translation_).norm() << std::endl;
     update(ref, curr, pose_T_C_R, depth, depth_cov2);
-    evaludateDepth(ref_depth, depth);
-    plotDepth(ref_depth, depth);
-    imshow("image", curr);
-    waitKey(1);
+    //evaludateDepth(ref_depth, depth);
+    //plotDepth(ref_depth, depth);
+    //imshow("image", curr);
+    //waitKey(1);
   }
 
   cout << "estimation returns, saving depth map ..." << endl;
@@ -237,7 +262,31 @@ int slam_main(int argc, char **argv) {
 
   return 0;
 }
+bool readDataset(const std::string &path,
+   std::vector<Image> &img_and_pose
+    ) {
+  ifstream fin(path + "/first_200_frames_traj_over_table_input_sequence.txt");
+  if (!fin) return false;
 
+  while (!fin.eof()) {
+    // 数据格式：图像文件名 tx, ty, tz, qx, qy, qz, qw ，注意是 TWC 而非 TCW
+    Image temp_image_and_pose;
+    string image;
+    fin >> image;
+    double data[7];
+    for (double &d:data) fin >> d;
+
+    temp_image_and_pose.img = cv::imread(path + string("/images/") + image);
+    Sophus::SE3d pose = SE3d(Quaterniond(data[6], data[3], data[4], data[5]),
+             Vector3d(data[0], data[1], data[2]));
+    temp_image_and_pose.rotation = pose.rotationMatrix();
+    temp_image_and_pose.translation = pose.translation();
+    img_and_pose.push_back(temp_image_and_pose);
+    if (!fin.good()) break;
+  }
+  fin.close();
+  return true;
+}
 bool readDatasetFiles(
     const string &path,
     vector<string> &color_image_files,
@@ -276,6 +325,58 @@ bool readDatasetFiles(
   return true;
 }
 
+bool epipolarSearch(
+    const cv::Mat &ref, const cv::Mat &curr,
+    const SE3d &T_C_R, const Vector2d &pt_ref,
+    Vector2d &pt_curr
+) {
+  Vector3d f_ref = px2cam(pt_ref);
+  f_ref.normalize();
+  const double min_distance = 1.0;
+  const double max_distance = 2.0;
+  Vector3d p_min_ref = f_ref * min_distance;
+  Vector3d p_max_ref = f_ref * max_distance;
+
+  Vector2d px_min_curr = cam2px(T_C_R * p_min_ref);
+  Vector2d px_max_curr = cam2px(T_C_R * p_max_ref);
+
+  Vector2d epipolar_line_direct = px_max_curr - px_min_curr;
+  epipolar_line_direct.normalize();
+
+  // first in
+  double distance = 0.0;
+  double step = sqrt(2.0);
+  const double max_pixel_distance = 100000;
+  for( ; distance < max_pixel_distance; distance += step) {
+    Vector2d pixel_curr = px_min_curr + epipolar_line_direct * distance;
+    if(inside(pixel_curr)) {
+      break;
+    }
+  }
+
+  if (distance >= max_pixel_distance) {
+    return false;
+  }
+
+  double best_ncc = 0.0;
+  Vector2d best_px_curr;
+  for(; distance < max_pixel_distance; distance += step) {
+    Vector2d pixel_curr = px_min_curr + epipolar_line_direct * distance;
+    if(inside(pixel_curr)) {
+      double ncc = NCC(ref, curr, pt_ref, pixel_curr);
+      if (ncc > best_ncc) {
+        best_ncc = ncc;
+        best_px_curr = pixel_curr;
+      }
+    }
+  }
+  if (best_ncc < 0.85) {
+    return false;
+  }
+  pt_curr = best_px_curr;
+  return true;
+}
+
 // 对整个深度图进行更新
 bool update(const Mat &ref, const Mat &curr, const SE3d &T_C_R, Mat &depth, Mat &depth_cov2) {
   for (int x = boarder; x < width - boarder; x++)
@@ -300,13 +401,22 @@ bool update(const Mat &ref, const Mat &curr, const SE3d &T_C_R, Mat &depth, Mat 
       if (ret == false) // 匹配失败
         continue;
 
+      Vector2d my_pt_curr;
+      ret = epipolarSearch(
+            ref,
+            curr,
+            T_C_R,
+            Vector2d(x, y),
+            my_pt_curr
+          );
       // 取消该注释以显示匹配
       // showEpipolarMatch(ref, curr, Vector2d(x, y), pt_curr);
-
+      showEpipolarMatch(ref, curr, Vector2d(x, y), my_pt_curr);
       // 匹配成功，更新深度图
       updateDepthFilter_myself(Vector2d(x, y), pt_curr, T_C_R, epipolar_direction, depth, depth_cov2);
     }
 }
+
 
 // 极线搜索
 // 方法见书 12.2 12.3 两节
